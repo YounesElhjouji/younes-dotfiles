@@ -104,7 +104,7 @@ export PATH=$PATH:$ANDROID_HOME/tools/bin
 
 # Personal variables
 export nvc="/Users/youneselhjouji/.config/nvim"
-export zrc="$HOME/myConfigs/zshrc"
+export zrc="$HOME/younes-dotfiles/zshrc"
 
 # IMPORTANT: Store sensitive keys in a separate file that's not in version control
 # Create a file like ~/.secrets and source it here
@@ -141,15 +141,6 @@ alias plog='pm2 logs --raw'
 alias pls='pm2 ls'
 alias pstall='pm2 stop all'
 
-# Git
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit'
-alias gp='git push'
-alias gl='git pull'
-alias gd='git diff'
-alias gco='git checkout'
-alias gb='git branch'
 
 # Eza 
 alias lss='eza --long --no-user --no-time --git --no-permissions --no-filesize --icons --group-directories-first '                                                     
@@ -173,9 +164,9 @@ function dev() {
   tmux attach-session -t "$session_name"
 }
 # Kill all local procceses
-alias k='~/myConfigs/kill_locals.sh'
+alias k='~/younes-dotfiles/kill_locals.sh'
 
-alias edit_s3='~/myConfigs/edit_s3.sh'
+alias edit_s3='~/younes-dotfiles/edit_s3.sh'
 
 # Misc
 alias lg='lazygit'

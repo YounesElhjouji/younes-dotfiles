@@ -13,7 +13,6 @@
 
 # Use the marker provided by the environment or default to "➜"
 regex="${TMUX_PROMPT_REGEX:-➜}"
-
 # Capture the last 1000 lines from the current pane (adjust -S if needed)
 pane=$(tmux capture-pane -J -p -S -1000)
 
