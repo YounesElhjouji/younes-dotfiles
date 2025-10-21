@@ -1,8 +1,9 @@
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="candy"
+ZSH_THEME="agnoster"
 
 # Enhanced plugin list
 plugins=(
+  fzf
   zsh-autosuggestions     # Requires installation
 )
 
@@ -65,6 +66,8 @@ eval "$(zoxide init zsh)"
 export nvc="/Users/youneselhjouji/.config/nvim"
 export zrc="$HOME/.zshrc"
 
+# IMPORTANT: Store sensitive keys in a separate file that's not in version control
+# Create a file like ~/.secrets and source it here
 if [ -f "$HOME/.secrets" ]; then
     source "$HOME/.secrets"
 fi
