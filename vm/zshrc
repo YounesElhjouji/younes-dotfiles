@@ -1,0 +1,118 @@
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="candy"
+
+# Enhanced plugin list
+plugins=(
+  zsh-autosuggestions     # Requires installation
+)
+
+source $ZSH/oh-my-zsh.sh
+
+# ===== HISTORY SETTINGS =====
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_FIND_NO_DUPS
+setopt HIST_SAVE_NO_DUPS
+
+# ===== VI MODE with Cursor Shape =====
+bindkey -v
+
+# Use jk to enter normal mode from insert mode
+bindkey -M viins 'jk' vi-cmd-mode
+
+# Reduce ESC delay
+export KEYTIMEOUT=20
+
+# Function to update the cursor style based on current keymap.
+# Note: These escape sequences (DECSCUSR) are supported in many modern terminal emulators
+# (e.g., iTerm2, recent xterm, etc.) but may not work in every terminal.
+update_cursor() {
+  if [[ $KEYMAP == vicmd ]]; then
+    print -Pn "\e[2 q"
+  else
+    print -Pn "\e[4 q"
+  fi
+}
+
+# Call update_cursor when the ZLE line is initialized
+function zle-line-init() {
+  update_cursor
+}
+
+# And whenever the keymap is switched
+function zle-keymap-select() {
+  update_cursor
+}
+
+# Bind the widgets
+zle -N zle-line-init
+zle -N zle-keymap-select
+
+# ===== TOOL CONFIGURATION =====
+
+# FZF setup
+export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
+export FZF_CTRL_T_OPTS="--preview 'cat {}'"
+export FZF_ALT_C_OPTS="--preview 'ls -la {}'"
+
+# Zoxide (modern alternative to cd)
+eval "$(zoxide init zsh)"
+
+# ===== PATH AND ENVIRONMENT VARIABLES =====
+
+# Personal variables
+export nvc="/Users/youneselhjouji/.config/nvim"
+export zrc="$HOME/.zshrc"
+
+if [ -f "$HOME/.secrets" ]; then
+    source "$HOME/.secrets"
+fi
+
+# ===== ALIASES =====
+
+# Directory navigation
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+alias cd='z'
+
+# Python
+alias avenv='source venv/bin/activate'
+alias venv='python -m venv venv && source venv/bin/activate'
+
+# Eza 
+alias lss='eza --long --no-user --no-time --git --no-permissions --no-filesize --icons --group-directories-first '                                                     
+alias treee='eza --tree'                                                     
+
+
+# Misc
+alias lg='lazygit'
+editrc() {
+  nvim "$zrc" && source "$zrc"
+}
+
+# ===== FUNCTIONS =====
+
+# Create and activate Python virtual environment
+function venv() {
+  python -m venv venv && source venv/bin/activate
+}
+
+# Function to create a new directory and cd into it
+function mkcd() {
+  mkdir -p "$1" && cd "$1"
+}
+
+
+# Set nvim as defautl editor
+export EDITOR="nvim"
+export VISUAL="nvim" 
+
+# Custom TAB completion with auto suggest default and fzf fallback 
+bindkey '^y' autosuggest-accept 
+
+# Rebind keys to navigate command history
+bindkey '^k' up-history
+bindkey '^j' down-history
+
