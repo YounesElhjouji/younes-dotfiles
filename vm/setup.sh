@@ -76,16 +76,31 @@ if ! command -v brew >/dev/null 2>&1; then
     fi
   fi
 
-  # Persist shellenv for future shells without editing your zshrc file
+  # Persist shellenv for future login shells (zsh: ~/.zprofile, bash/posix: ~/.profile)
   BREW_ENV_SNIPPET='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+
+  ZPROFILE_FILE="$HOME/.zprofile"
+  if ! grep -Fq "$BREW_ENV_SNIPPET" "$ZPROFILE_FILE" 2>/dev/null; then
+    log "Persisting brew shellenv to $ZPROFILE_FILE"
+    {
+      echo ""
+      echo "# Added by vm/setup.sh for Linuxbrew (zsh login shell)"
+      echo "$BREW_ENV_SNIPPET"
+    } >>"$ZPROFILE_FILE"
+  else
+    log "brew shellenv already present in $ZPROFILE_FILE"
+  fi
+
   PROFILE_FILE="$HOME/.profile"
   if ! grep -Fq "$BREW_ENV_SNIPPET" "$PROFILE_FILE" 2>/dev/null; then
     log "Persisting brew shellenv to $PROFILE_FILE"
     {
       echo ""
-      echo "# Added by vm/setup.sh for Linuxbrew"
+      echo "# Added by vm/setup.sh for Linuxbrew (POSIX login shell)"
       echo "$BREW_ENV_SNIPPET"
     } >>"$PROFILE_FILE"
+  else
+    log "brew shellenv already present in $PROFILE_FILE"
   fi
 else
   # Ensure available in current process
@@ -101,8 +116,7 @@ log "Updating Homebrew..."
 brew update
 
 # ========== Developer tools via brew ==========
-# You asked for bat, ripgrep, git available; ripgrep and git already via apt,
-# but installing via brew ensures newer versions accessible in PATH.
+# ripgrep and git already via apt, but brew ensures newer versions in PATH.
 BREW_PKGS=(
   neovim
   fzf
@@ -148,7 +162,7 @@ if [ ! -f "$ZSHRC_SOURCE" ]; then
   exit 1
 fi
 
-if [ -e "$ZSHRC_TARGET" ] && [ ! -L "$ZSHRC_TARGET" -o "$(readlink -f "$ZSHRC_TARGET")" != "$(readlink -f "$ZSHRC_SOURCE")" ]; then
+if [ -e "$ZSHRC_TARGET" ] && { [ ! -L "$ZSHRC_TARGET" ] || [ "$(readlink -f "$ZSHRC_TARGET")" != "$(readlink -f "$ZSHRC_SOURCE")" ]; }; then
   BAK="$HOME/.zshrc.bak-$(timestamp)"
   log "Backing up existing ~/.zshrc to $BAK"
   mv "$ZSHRC_TARGET" "$BAK"
@@ -168,9 +182,19 @@ if ! grep -qx "$ZSH_PATH" /etc/shells; then
   echo "$ZSH_PATH" | sudo tee -a /etc/shells >/dev/null
 fi
 
-if [ "$SHELL" != "$ZSH_PATH" ]; then
-  log "Setting default shell to zsh for $USER"
-  chsh -s "$ZSH_PATH" "$USER" || warn "chsh failed; you may need to log out/in or run: chsh -s $ZSH_PATH"
+CURRENT_SHELL="$(getent passwd "$USER" | awk -F: '{print $7}')"
+if [ "$CURRENT_SHELL" != "$ZSH_PATH" ]; then
+  log "Setting default shell to zsh for $USER (current: $CURRENT_SHELL)"
+  if chsh -s "$ZSH_PATH" "$USER" 2>/dev/null; then
+    :
+  else
+    # For cloud users with locked passwords, use sudo
+    if sudo chsh -s "$ZSH_PATH" "$USER"; then
+      log "Default shell set via sudo chsh."
+    else
+      warn "Failed to set default shell. You can run: sudo chsh -s $ZSH_PATH $USER"
+    fi
+  fi
 fi
 
 # ========== Neovim config ==========
