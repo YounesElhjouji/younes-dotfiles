@@ -60,6 +60,7 @@ function zle-keymap-select() {
 zle -N zle-line-init
 zle -N zle-keymap-select
 
+
 # ===== TOOL CONFIGURATION =====
 
 # FZF setup
@@ -67,6 +68,7 @@ eval "$(fzf --zsh)"
 export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
 export FZF_CTRL_T_OPTS="--preview 'cat {}'"
 export FZF_ALT_C_OPTS="--preview 'ls -la {}'"
+
 
 # Zoxide (modern alternative to cd)
 eval "$(zoxide init zsh)"
@@ -251,3 +253,4 @@ compinit
 
 # The next line updates PATH for Nebius CLI.
 if [ -f '/Users/youneselhjouji/.nebius/path.zsh.inc' ]; then source '/Users/youneselhjouji/.nebius/path.zsh.inc'; fi
+
