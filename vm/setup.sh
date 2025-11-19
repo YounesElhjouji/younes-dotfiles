@@ -189,16 +189,12 @@ fi
 CURRENT_SHELL="$(getent passwd "$USER" | awk -F: '{print $7}')"
 if [ "$CURRENT_SHELL" != "$ZSH_PATH" ]; then
   log "Setting default shell to zsh for $USER (current: $CURRENT_SHELL)"
-  if chsh -s "$ZSH_PATH" "$USER" 2>/dev/null; then
-    :
-  else
     # For cloud users with locked passwords, use sudo
     if sudo chsh -s "$ZSH_PATH" "$USER"; then
       log "Default shell set via sudo chsh."
     else
       warn "Failed to set default shell. You can run: sudo chsh -s $ZSH_PATH $USER"
     fi
-  fi
 fi
 
 
