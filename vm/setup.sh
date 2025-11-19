@@ -131,6 +131,10 @@ BREW_PKGS=(
 log "Installing tools via brew: ${BREW_PKGS[*]}"
 brew install "${BREW_PKGS[@]}"
 
+# Install shell-ai
+brew tap ibigio/tap
+brew install shell-ai
+
 # fzf key bindings and completion (non-interactive)
 if [ -x "$(brew --prefix)/opt/fzf/install" ]; then
   log "Enabling fzf key bindings and completion..."
@@ -196,6 +200,7 @@ if [ "$CURRENT_SHELL" != "$ZSH_PATH" ]; then
     fi
   fi
 fi
+
 
 # ========== Neovim config ==========
 mkdir -p "$HOME/.config"
