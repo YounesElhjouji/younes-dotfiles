@@ -1,6 +1,6 @@
 # ===== OH-MY-ZSH CONFIGURATION =====
 export ZSH="$HOME/.oh-my-zsh"
-# ZSH_THEME="robbyrussell"
+ZSH_THEME="robbyrussell"
 
 # Docker Desktop completions: must be set BEFORE oh-my-zsh initializes completion
 fpath=(/Users/youneselhjouji/.docker/completions $fpath)
