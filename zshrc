@@ -65,6 +65,21 @@ eval "$(zoxide init zsh)"
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
+# Conda setup
+# >>> conda initialize >>>
+__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+  eval "$__conda_setup"
+else
+  if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+    . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+  else
+    export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+  fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
 # PNPM setup
 export PNPM_HOME="/Users/youneselhjouji/Library/pnpm"
 case ":$PATH:" in
@@ -73,6 +88,7 @@ case ":$PATH:" in
 esac
 
 # Personal variables
+export nvc="/Users/youneselhjouji/.config/nvim"
 export zrc="$HOME/younes-dotfiles/zshrc"
 
 # IMPORTANT: Store sensitive keys in a separate file that's not in version control
@@ -164,4 +180,3 @@ bindkey '^j' down-history
 if [ -f '/Users/youneselhjouji/.nebius/path.zsh.inc' ]; then
   source '/Users/youneselhjouji/.nebius/path.zsh.inc'
 fi
-
