@@ -10,7 +10,7 @@
 set -euo pipefail
 
 # Default: match either arrow commonly used by prompts
-regex="${TMUX_PROMPT_REGEX:-➜|➭}"
+regex="${TMUX_PROMPT_REGEX:-➜|➭|»}"
 
 pane=$(tmux capture-pane -J -p -S -1000)
 
