@@ -1,0 +1,40 @@
+# auto-shutdown-if-no-ssh.service
+#
+# Cheatsheet
+#   Install + enable on boot:
+#     sudo cp auto-shutdown-if-no-ssh.{service,timer} /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now auto-shutdown-if-no-ssh.timer
+#   Disable (stop + don't start on boot):
+#     sudo systemctl disable --now auto-shutdown-if-no-ssh.timer
+#   Enable (start + start on boot):
+#     sudo systemctl enable --now auto-shutdown-if-no-ssh.timer
+#   Uninstall:
+#     sudo systemctl disable --now auto-shutdown-if-no-ssh.timer; sudo rm -f /etc/systemd/system/auto-shutdown-if-no-ssh.{service,timer}; sudo systemctl daemon-reload
+
+[Unit]
+Description=Auto shutdown if no interactive SSH sessions for 30 minutes
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -eu -c '
+  IDLE_SECONDS=1800
+  STAMP=/run/idle-ssh-since
+
+  ACTIVE_SESSIONS="$(who | awk '"'"'$2 ~ /^pts\// {c++} END {print c+0}'"'"')"
+  NOW="$(date +%s)"
+
+  if [ "$ACTIVE_SESSIONS" -eq 0 ]; then
+    if [ ! -f "$STAMP" ]; then
+      echo "$NOW" >"$STAMP"
+      exit 0
+    fi
+
+    SINCE="$(cat "$STAMP")"
+    IDLE="$(( NOW - SINCE ))"
+
+    if [ "$IDLE" -ge "$IDLE_SECONDS" ]; then
+      /sbin/shutdown -h now
+    fi
+  else
+    rm -f "$STAMP"
+  fi
+'
