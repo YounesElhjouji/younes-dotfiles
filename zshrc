@@ -1,4 +1,3 @@
-# ===== OH-MY-ZSH CONFIGURATION =====
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="robbyrussell"
 
@@ -65,21 +64,6 @@ eval "$(zoxide init zsh)"
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
-# Conda setup
-# >>> conda initialize >>>
-__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-  eval "$__conda_setup"
-else
-  if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
-    . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
-  else
-    export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
-  fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-
 # PNPM setup
 export PNPM_HOME="/Users/youneselhjouji/Library/pnpm"
 case ":$PATH:" in
@@ -97,6 +81,13 @@ if [ -f "$HOME/.secrets" ]; then
 fi
 
 # ===== ALIASES =====
+alias python3=/opt/homebrew/bin/python3.11
+alias python=/opt/homebrew/bin/python3.11
+
+# Override aliases when in a venv
+if [[ -n "$VIRTUAL_ENV" ]]; then
+    unalias python python3 2>/dev/null
+fi
 
 # AIChat
 alias aic='aichat -c '
@@ -112,7 +103,7 @@ alias cd='z'
 # Python
 alias avenv='source venv/bin/activate'
 alias pin='pip install'
-alias venv='python -m venv venv && source venv/bin/activate'
+alias venv='python3 -m venv venv && source venv/bin/activate'
 
 # Neovim
 alias n='nvim'
@@ -175,8 +166,5 @@ bindkey '^y' autosuggest-accept
 bindkey '^k' up-history
 bindkey '^j' down-history
 
-
-# The next line updates PATH for Nebius CLI.
-if [ -f '/Users/youneselhjouji/.nebius/path.zsh.inc' ]; then
-  source '/Users/youneselhjouji/.nebius/path.zsh.inc'
-fi
+source ~/.k8s-helpers.zsh
+export PATH="$HOME/.local/bin:$PATH"
