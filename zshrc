@@ -9,6 +9,7 @@ plugins=(
   zsh-autosuggestions     # Requires installation
   docker
   docker-compose
+  kubectl
   fzf
   fzf-tab
 )
@@ -64,6 +65,9 @@ eval "$(zoxide init zsh)"
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
+# Kubernetes: merge multiple kubeconfig files
+export KUBECONFIG=~/.kube/config:~/.kube/overshoot-h100.k8sconfig
+
 # PNPM setup
 export PNPM_HOME="/Users/youneselhjouji/Library/pnpm"
 case ":$PATH:" in
@@ -81,13 +85,8 @@ if [ -f "$HOME/.secrets" ]; then
 fi
 
 # ===== ALIASES =====
-alias python3=/opt/homebrew/bin/python3.11
-alias python=/opt/homebrew/bin/python3.11
-
-# Override aliases when in a venv
-if [[ -n "$VIRTUAL_ENV" ]]; then
-    unalias python python3 2>/dev/null
-fi
+#
+alias tcloud-ssh='KUBECONFIG=~/.kube/overshoot-h100.k8sconfig kubectl exec -it gpu-workspace -- /bin/bash'
 
 # AIChat
 alias aic='aichat -c '

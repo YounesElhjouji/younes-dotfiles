@@ -6,7 +6,7 @@ format_context() {
 
   if [ -z "$ctx" ] || [ "$ctx" = "-" ]; then
     echo "-"
-  elif echo "$ctx" | grep -qi 'dev'; then
+  elif echo "$ctx" | grep -qi 'dev\|together'; then
     echo "$ctx"
   else
     echo "#[fg=red,bold]${ctx}#[fg=default,nobold]"
@@ -28,6 +28,14 @@ if [ "$pane_cmd" = "ssh" ]; then
   fi
 else
   # Local: show local kubectl context
-  ctx=$(kubectl config current-context 2>/dev/null | sed 's/.*_//')
+  ctx=$(kubectl config current-context 2>/dev/null)
+
+  # Simplify context names for display
+  if echo "$ctx" | grep -q 't-ee4544ca'; then
+    ctx="together-h100"
+  else
+    ctx=$(echo "$ctx" | sed 's/.*_//')
+  fi
+
   format_context "$ctx"
 fi
