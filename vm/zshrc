@@ -57,8 +57,10 @@ export FZF_DEFAULT_OPTS="--height 40% --layout=reverse --border"
 export FZF_CTRL_T_OPTS="--preview 'cat {}'"
 export FZF_ALT_C_OPTS="--preview 'ls -la {}'"
 
-# Zoxide (modern alternative to cd)
-eval "$(zoxide init zsh)"
+# Zoxide (modern alternative to cd) — guarded for Phase 2 background install
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh)"
+fi
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
@@ -78,7 +80,9 @@ fi
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias cd='z'
+if command -v zoxide &>/dev/null; then
+  alias cd='z'
+fi
 
 # Python
 alias avenv='source venv/bin/activate'
@@ -118,4 +122,64 @@ bindkey '^y' autosuggest-accept
 # Rebind keys to navigate command history
 bindkey '^k' up-history
 bindkey '^j' down-history
+
+# ===== SUIT STATUS =====
+suit-status() {
+  local green='\033[1;32m' red='\033[1;31m' yellow='\033[1;33m'
+  local cyan='\033[1;36m' bold='\033[1m' reset='\033[0m'
+
+  _check() {
+    if command -v "$1" &>/dev/null; then
+      printf "  ${green}[x]${reset} %s\n" "$2"
+    else
+      printf "  ${red}[ ]${reset} %s\n" "$2"
+    fi
+  }
+
+  _check_dir() {
+    if [ -d "$1" ]; then
+      printf "  ${green}[x]${reset} %s\n" "$2"
+    else
+      printf "  ${red}[ ]${reset} %s\n" "$2"
+    fi
+  }
+
+  echo ""
+  printf "${cyan}${bold}  SUIT STATUS${reset}\n"
+  echo "  ─────────────────────────"
+
+  printf "\n${bold}  CLI Tools${reset}\n"
+  _check brew        "brew"
+  _check nvim        "neovim"
+  _check fzf         "fzf"
+  _check eza         "eza"
+  _check zoxide      "zoxide"
+  _check lazygit     "lazygit"
+  _check bat         "bat"
+  _check rg          "ripgrep"
+  _check fd          "fd"
+  _check shell-ai    "shell-ai"
+
+  printf "\n${bold}  Shell & Config${reset}\n"
+  _check_dir "$HOME/.oh-my-zsh"                              "oh-my-zsh"
+  _check_dir "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" "zsh-autosuggestions"
+  _check_dir "$HOME/.config/nvim"                             "nvim config"
+
+  if [ -f "$HOME/.suit-up.log" ]; then
+    echo ""
+    if [ -f "$HOME/.suit-up.pid" ] && kill -0 "$(cat "$HOME/.suit-up.pid")" 2>/dev/null; then
+      printf "  ${yellow}Phase 2 is still running...${reset}\n"
+      printf "  Log: ~/.suit-up.log\n"
+      printf "  Last line: %s\n" "$(tail -1 "$HOME/.suit-up.log")"
+    else
+      if tail -1 "$HOME/.suit-up.log" | grep -q "Phase 2 complete"; then
+        printf "  ${green}Phase 2 finished successfully.${reset}\n"
+      else
+        printf "  ${red}Phase 2 may have failed. Check ~/.suit-up.log${reset}\n"
+      fi
+    fi
+  fi
+
+  echo ""
+}
 

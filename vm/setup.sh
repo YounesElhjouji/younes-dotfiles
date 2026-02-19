@@ -24,8 +24,8 @@ ZSHRC_SOURCE="$REPO_ROOT/vm/zshrc"
 ZSHRC_TARGET="$HOME/.zshrc"
 NVIM_DIR="$HOME/.config/nvim"
 NVIM_REPO="https://github.com/YounesElhjouji/younes-nvim-config.git"
+SUIT_LOG="$HOME/.suit-up.log"
 
-# We prefer brew for modern versions, apt for base/system
 BREW_PREFIX_DEFAULT="/home/linuxbrew/.linuxbrew"
 
 # ========== Pre-flight ==========
@@ -36,6 +36,13 @@ fi
 if [ "$EUID" -eq 0 ]; then
   warn "Run this as a regular user; sudo will be used as needed."
 fi
+
+# ==========================================================
+#  PHASE 1 — Foreground (fast)
+#  Everything needed for a usable zsh session
+# ==========================================================
+
+log "=== Phase 1: Setting up base environment ==="
 
 log "Updating apt package lists..."
 sudo apt-get update -y
@@ -54,91 +61,6 @@ if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
   log "Creating fd -> fdfind symlink in ~/.local/bin"
   mkdir -p "$HOME/.local/bin"
   ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
-  if ! grep -q "$HOME/.local/bin" <<<"$PATH"; then
-    warn "~/.local/bin not on PATH for current session; it will be on next login if your shell sources it."
-  fi
-fi
-
-# ========== Homebrew (Linuxbrew) ==========
-if ! command -v brew >/dev/null 2>&1; then
-  log "Installing Homebrew (Linuxbrew)..."
-  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-  # Shellenv for current session
-  if [ -x "$BREW_PREFIX_DEFAULT/bin/brew" ]; then
-    eval "$("$BREW_PREFIX_DEFAULT/bin/brew" shellenv)"
-  elif [ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
-    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-  else
-    # Fallback: try to find brew
-    if command -v brew >/dev/null 2>&1; then
-      eval "$(brew shellenv)"
-    fi
-  fi
-
-  # Persist shellenv for future login shells (zsh: ~/.zprofile, bash/posix: ~/.profile)
-  BREW_ENV_SNIPPET='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
-
-  ZPROFILE_FILE="$HOME/.zprofile"
-  if ! grep -Fq "$BREW_ENV_SNIPPET" "$ZPROFILE_FILE" 2>/dev/null; then
-    log "Persisting brew shellenv to $ZPROFILE_FILE"
-    {
-      echo ""
-      echo "# Added by vm/setup.sh for Linuxbrew (zsh login shell)"
-      echo "$BREW_ENV_SNIPPET"
-    } >>"$ZPROFILE_FILE"
-  else
-    log "brew shellenv already present in $ZPROFILE_FILE"
-  fi
-
-  PROFILE_FILE="$HOME/.profile"
-  if ! grep -Fq "$BREW_ENV_SNIPPET" "$PROFILE_FILE" 2>/dev/null; then
-    log "Persisting brew shellenv to $PROFILE_FILE"
-    {
-      echo ""
-      echo "# Added by vm/setup.sh for Linuxbrew (POSIX login shell)"
-      echo "$BREW_ENV_SNIPPET"
-    } >>"$PROFILE_FILE"
-  else
-    log "brew shellenv already present in $PROFILE_FILE"
-  fi
-else
-  # Ensure available in current process
-  eval "$(brew shellenv 2>/dev/null || true)"
-fi
-
-require_cmd brew || {
-  err "brew not found after installation. Aborting."
-  exit 1
-}
-
-log "Updating Homebrew..."
-brew update
-
-# ========== Developer tools via brew ==========
-# ripgrep and git already via apt, but brew ensures newer versions in PATH.
-BREW_PKGS=(
-  neovim
-  fzf
-  eza
-  zoxide
-  lazygit
-  bat
-  ripgrep
-  git
-)
-
-log "Installing tools via brew: ${BREW_PKGS[*]}"
-brew install "${BREW_PKGS[@]}"
-
-# Install shell-ai
-brew tap ibigio/tap
-brew install shell-ai
-
-# fzf key bindings and completion (non-interactive)
-if [ -x "$(brew --prefix)/opt/fzf/install" ]; then
-  log "Enabling fzf key bindings and completion..."
-  "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --xdg
 fi
 
 # ========== Oh My Zsh ==========
@@ -189,64 +111,152 @@ fi
 CURRENT_SHELL="$(getent passwd "$USER" | awk -F: '{print $7}')"
 if [ "$CURRENT_SHELL" != "$ZSH_PATH" ]; then
   log "Setting default shell to zsh for $USER (current: $CURRENT_SHELL)"
-    # For cloud users with locked passwords, use sudo
-    if sudo chsh -s "$ZSH_PATH" "$USER"; then
-      log "Default shell set via sudo chsh."
-    else
-      warn "Failed to set default shell. You can run: sudo chsh -s $ZSH_PATH $USER"
-    fi
+  if sudo chsh -s "$ZSH_PATH" "$USER"; then
+    log "Default shell set via sudo chsh."
+  else
+    warn "Failed to set default shell. You can run: sudo chsh -s $ZSH_PATH $USER"
+  fi
 fi
 
+log "=== Phase 1 complete! Zsh is ready. ==="
 
-# ========== Neovim config ==========
-mkdir -p "$HOME/.config"
+# ==========================================================
+#  PHASE 2 — Background (slow)
+#  Brew, dev tools, neovim config — runs asynchronously
+# ==========================================================
 
-if [ -d "$NVIM_DIR/.git" ]; then
-  # Check if it's your repo
-  ORIGIN_URL="$(git -C "$NVIM_DIR" remote get-url origin 2>/dev/null || true)"
-  if [ "$ORIGIN_URL" = "$NVIM_REPO" ]; then
-    log "Updating existing nvim config..."
-    git -C "$NVIM_DIR" pull --ff-only || true
+phase2() {
+  set -euo pipefail
+
+  log() { printf "\n\033[1;34m[INFO]\033[0m %s\n" "$*"; }
+  warn() { printf "\n\033[1;33m[WARN]\033[0m %s\n" "$*"; }
+  err() { printf "\n\033[1;31m[ERR]\033[0m  %s\n" "$*" >&2; }
+  timestamp() { date +"%Y%m%d-%H%M%S"; }
+
+  BREW_PREFIX_DEFAULT="/home/linuxbrew/.linuxbrew"
+  NVIM_DIR="$HOME/.config/nvim"
+  NVIM_REPO="https://github.com/YounesElhjouji/younes-nvim-config.git"
+
+  echo "========================================"
+  echo " Phase 2 started at $(date)"
+  echo "========================================"
+
+  # ========== Homebrew (Linuxbrew) ==========
+  if ! command -v brew >/dev/null 2>&1; then
+    log "Installing Homebrew (Linuxbrew)..."
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    if [ -x "$BREW_PREFIX_DEFAULT/bin/brew" ]; then
+      eval "$("$BREW_PREFIX_DEFAULT/bin/brew" shellenv)"
+    fi
+
+    # Persist shellenv for future shells
+    BREW_ENV_SNIPPET='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+
+    for rc_file in "$HOME/.zprofile" "$HOME/.profile"; do
+      if ! grep -Fq "$BREW_ENV_SNIPPET" "$rc_file" 2>/dev/null; then
+        log "Persisting brew shellenv to $rc_file"
+        printf '\n# Added by vm/setup.sh for Linuxbrew\n%s\n' "$BREW_ENV_SNIPPET" >> "$rc_file"
+      fi
+    done
   else
+    eval "$(brew shellenv 2>/dev/null || true)"
+  fi
+
+  if ! command -v brew >/dev/null 2>&1; then
+    err "brew not found after installation. Aborting phase 2."
+    exit 1
+  fi
+
+  log "Updating Homebrew..."
+  brew update
+
+  # ========== Dev tools via brew ==========
+  BREW_PKGS=(
+    neovim
+    fzf
+    eza
+    zoxide
+    lazygit
+    bat
+    ripgrep
+    git
+  )
+
+  log "Installing tools via brew: ${BREW_PKGS[*]}"
+  brew install "${BREW_PKGS[@]}"
+
+  # shell-ai
+  brew tap ibigio/tap
+  brew install shell-ai
+
+  # fzf key bindings and completion
+  if [ -x "$(brew --prefix)/opt/fzf/install" ]; then
+    log "Enabling fzf key bindings and completion..."
+    "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --xdg
+  fi
+
+  # ========== Neovim config ==========
+  mkdir -p "$HOME/.config"
+
+  if [ -d "$NVIM_DIR/.git" ]; then
+    ORIGIN_URL="$(git -C "$NVIM_DIR" remote get-url origin 2>/dev/null || true)"
+    if [ "$ORIGIN_URL" = "$NVIM_REPO" ]; then
+      log "Updating existing nvim config..."
+      git -C "$NVIM_DIR" pull --ff-only || true
+    else
+      BAK="$HOME/.config/nvim.bak-$(timestamp)"
+      log "Backing up existing nvim config to $BAK"
+      mv "$NVIM_DIR" "$BAK"
+      git clone "$NVIM_REPO" "$NVIM_DIR"
+    fi
+  elif [ -e "$NVIM_DIR" ]; then
     BAK="$HOME/.config/nvim.bak-$(timestamp)"
-    log "Existing ~/.config/nvim differs. Backing up to $BAK"
+    log "Backing up non-git nvim config to $BAK"
     mv "$NVIM_DIR" "$BAK"
-    log "Cloning your nvim config..."
+    git clone "$NVIM_REPO" "$NVIM_DIR"
+  else
+    log "Cloning nvim config..."
     git clone "$NVIM_REPO" "$NVIM_DIR"
   fi
-elif [ -e "$NVIM_DIR" ]; then
-  BAK="$HOME/.config/nvim.bak-$(timestamp)"
-  log "Backing up non-git ~/.config/nvim to $BAK"
-  mv "$NVIM_DIR" "$BAK"
-  log "Cloning your nvim config..."
-  git clone "$NVIM_REPO" "$NVIM_DIR"
-else
-  log "Cloning your nvim config..."
-  git clone "$NVIM_REPO" "$NVIM_DIR"
-fi
 
-# ========== Preinstall Neovim plugins (Lazy) ==========
-if command -v nvim >/dev/null 2>&1; then
-  log "Bootstrapping Neovim plugins (Lazy sync)..."
-  nvim --headless "+Lazy! sync" +qa || warn "Lazy sync reported issues; open nvim to see details."
-else
-  warn "nvim not found in PATH after install. Check brew shellenv/paths."
-fi
+  # Lazy sync
+  if command -v nvim >/dev/null 2>&1; then
+    log "Bootstrapping Neovim plugins (Lazy sync)..."
+    nvim --headless "+Lazy! sync" +qa || warn "Lazy sync reported issues; open nvim to see details."
+  else
+    warn "nvim not found in PATH after install."
+  fi
 
-# ========== Cleanup ==========
-log "brew cleanup..."
-brew cleanup || true
+  # ========== Cleanup ==========
+  log "brew cleanup..."
+  brew cleanup || true
 
-# ========== Summary ==========
-log "Setup complete."
-echo "- Homebrew installed: $(command -v brew || echo 'not found')"
-echo "- zsh path: $ZSH_PATH (default shell set)"
-echo "- zshrc symlink: $ZSHRC_SOURCE -> $ZSHRC_TARGET"
-echo "- Neovim config: $NVIM_DIR"
-echo "- fzf keybindings/completion installed"
+  echo ""
+  echo "========================================"
+  echo " Phase 2 complete at $(date)"
+  echo "========================================"
+}
 
-# ========== Start zsh ==========
-# If already in zsh, exec no-op; otherwise start zsh.
+log "Launching Phase 2 (brew, neovim, dev tools) in background..."
+log "Progress is logged to $SUIT_LOG"
+phase2 >> "$SUIT_LOG" 2>&1 &
+PHASE2_PID=$!
+echo "$PHASE2_PID" > "$HOME/.suit-up.pid"
+
+echo ""
+echo "============================================"
+echo "  Your shell is ready!"
+echo ""
+echo "  Phase 2 is installing dev tools in the"
+echo "  background (brew, neovim, fzf, etc.)"
+echo ""
+echo "  Run 'suit-status' to check progress."
+echo "  Full log: $SUIT_LOG"
+echo "============================================"
+echo ""
+
+# ========== Drop into zsh ==========
 if [ -n "${ZSH_VERSION:-}" ]; then
   log "Already in zsh."
 else
