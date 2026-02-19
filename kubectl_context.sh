@@ -21,7 +21,7 @@ if [ "$pane_cmd" = "ssh" ]; then
   pane_title=$(tmux display-message -p '#{pane_title}' 2>/dev/null)
 
   if [ -n "$pane_title" ] && echo "$pane_title" | grep -qE '^k8s:'; then
-    remote_ctx=$(echo "$pane_title" | sed 's/^k8s://')
+    remote_ctx=$(echo "$pane_title" | sed 's/^k8s://; s/ cwd:.*//')
     format_context "$remote_ctx"
   else
     echo "-"
