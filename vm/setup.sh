@@ -22,6 +22,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ZSHRC_SOURCE="$REPO_ROOT/vm/zshrc"
 ZSHRC_TARGET="$HOME/.zshrc"
+TMUX_SOURCE="$REPO_ROOT/vm/tmux.conf"
+TMUX_TARGET="$HOME/.tmux.conf"
 NVIM_DIR="$HOME/.config/nvim"
 NVIM_REPO="https://github.com/YounesElhjouji/younes-nvim-config.git"
 SUIT_LOG="$HOME/.suit-up.log"
@@ -99,6 +101,24 @@ if [ -L "$ZSHRC_TARGET" ] && [ "$(readlink -f "$ZSHRC_TARGET")" = "$(readlink -f
 else
   log "Symlinking $ZSHRC_SOURCE -> $ZSHRC_TARGET"
   ln -sfn "$ZSHRC_SOURCE" "$ZSHRC_TARGET"
+fi
+
+# ========== Symlink tmux.conf ==========
+if [ ! -f "$TMUX_SOURCE" ]; then
+  warn "Expected tmux.conf at $TMUX_SOURCE not found. Skipping."
+else
+  if [ -e "$TMUX_TARGET" ] && { [ ! -L "$TMUX_TARGET" ] || [ "$(readlink -f "$TMUX_TARGET")" != "$(readlink -f "$TMUX_SOURCE")" ]; }; then
+    BAK="$HOME/.tmux.conf.bak-$(timestamp)"
+    log "Backing up existing ~/.tmux.conf to $BAK"
+    mv "$TMUX_TARGET" "$BAK"
+  fi
+
+  if [ -L "$TMUX_TARGET" ] && [ "$(readlink -f "$TMUX_TARGET")" = "$(readlink -f "$TMUX_SOURCE")" ]; then
+    log "~/.tmux.conf already correctly symlinked."
+  else
+    log "Symlinking $TMUX_SOURCE -> $TMUX_TARGET"
+    ln -sfn "$TMUX_SOURCE" "$TMUX_TARGET"
+  fi
 fi
 
 # ========== Default shell: zsh ==========
