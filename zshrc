@@ -61,7 +61,9 @@ zle -N zle-keymap-select
 zstyle ':fzf-tab:*' switch-group ',' '.'
 
 # Zoxide (modern alternative to cd)
-eval "$(zoxide init zsh)"
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh)"
+fi
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
@@ -97,7 +99,9 @@ alias ain='aichat "Give me the Neovim keybindings or commands to: " '
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
-alias cd='z'
+if command -v zoxide &>/dev/null; then
+  alias cd='z'
+fi
 
 # Python
 alias avenv='source venv/bin/activate'
