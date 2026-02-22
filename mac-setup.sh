@@ -67,9 +67,36 @@ fi
 log "Updating Homebrew..."
 brew update
 
-# ========== Core packages ==========
-log "Installing core packages..."
-brew install git zsh tmux
+# ========== All packages via brew ==========
+BREW_PKGS=(
+  git zsh tmux
+  neovim fzf eza zoxide lazygit
+  bat ripgrep fd
+  python3 pnpm kubectl aichat
+)
+
+log "Installing packages via brew: ${BREW_PKGS[*]}"
+brew install "${BREW_PKGS[@]}"
+
+# shell-ai
+if ! command -v shell-ai &>/dev/null; then
+  log "Installing shell-ai..."
+  brew tap ibigio/tap && brew install shell-ai || warn "shell-ai install failed, skipping."
+fi
+
+# fzf key bindings and completion
+if [ -x "$(brew --prefix)/opt/fzf/install" ]; then
+  log "Enabling fzf key bindings and completion..."
+  "$(brew --prefix)/opt/fzf/install" --key-bindings --completion --no-update-rc --xdg
+fi
+
+# ========== TPM (tmux plugin manager) ==========
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+  log "Installing TPM (tmux plugin manager)..."
+  git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+else
+  log "TPM already installed."
+fi
 
 # ========== Oh My Zsh ==========
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
