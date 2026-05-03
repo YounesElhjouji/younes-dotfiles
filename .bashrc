@@ -74,13 +74,21 @@ fi
 # Optional aliases file
 [ -f ~/.bash_aliases ] && . ~/.bash_aliases
 
-# Nebius CLI path and completion (if installed)
-[ -f "$HOME/.nebius/path.bash.inc" ] && . "$HOME/.nebius/path.bash.inc"
-[ -f "$HOME/.nebius/completion.bash.inc" ] && . "$HOME/.nebius/completion.bash.inc"
-
 # Homebrew (Linuxbrew)
 if [ -x /home/linuxbrew/.linuxbrew/bin/brew ]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
+
+# Optional private/org overlay. Keep company-specific helpers out of this public repo.
+OVS_DOTFILES_DIR="${OVS_DOTFILES_DIR:-$HOME/.ovs-dotfiles}"
+if [ -d "$OVS_DOTFILES_DIR/bin" ]; then
+  export PATH="$OVS_DOTFILES_DIR/bin:$PATH"
+fi
+if [ -d "$OVS_DOTFILES_DIR/bash" ]; then
+  for ovs_file in "$OVS_DOTFILES_DIR"/bash/*.bash; do
+    [ -f "$ovs_file" ] && . "$ovs_file"
+  done
+  unset ovs_file
 fi
 
 # FZF integration
@@ -132,4 +140,3 @@ mkcd() { mkdir -p -- "$1" && cd -- "$1"; }
 bind -m emacs-standard '"\C-l":clear-screen'
 bind -m vi-command     '"\C-l":clear-screen'
 bind -m vi-insert      '"\C-l":clear-screen'
-

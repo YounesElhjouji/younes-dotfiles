@@ -72,7 +72,7 @@ BREW_PKGS=(
   git zsh tmux
   neovim fzf eza zoxide lazygit
   bat ripgrep fd
-  python3 pnpm kubectl aichat
+  python3 pnpm aichat
 )
 
 log "Installing packages via brew: ${BREW_PKGS[*]}"
@@ -153,13 +153,6 @@ symlink_config "$ZSHRC_SOURCE"   "$ZSHRC_TARGET"   "zshrc"
 symlink_config "$TMUX_SOURCE"    "$TMUX_TARGET"     "tmux.conf"
 symlink_config "$GHOSTTY_SOURCE" "$GHOSTTY_TARGET"  "ghostty config"
 
-# ========== Create empty k8s-helpers if missing ==========
-# zshrc sources this; create a stub so zsh doesn't error
-if [ ! -f "$HOME/.k8s-helpers.zsh" ]; then
-  log "Creating empty ~/.k8s-helpers.zsh stub"
-  touch "$HOME/.k8s-helpers.zsh"
-fi
-
 # ========== Default shell: zsh ==========
 ZSH_PATH="$(command -v zsh)"
 CURRENT_SHELL="$(dscl . -read /Users/"$USER" UserShell | awk '{print $2}')"
@@ -203,7 +196,6 @@ phase2() {
     fd
     python3
     pnpm
-    kubectl
     aichat
   )
 

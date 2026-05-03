@@ -9,7 +9,6 @@ plugins=(
   zsh-autosuggestions     # Requires installation
   docker
   docker-compose
-  kubectl
   fzf
   fzf-tab
 )
@@ -67,9 +66,6 @@ fi
 
 # ===== PATH AND ENVIRONMENT VARIABLES =====
 
-# Kubernetes: merge multiple kubeconfig files
-export KUBECONFIG=~/.kube/config:~/.kube/overshoot-h100.k8sconfig
-
 # PNPM setup
 export PNPM_HOME="/Users/youneselhjouji/Library/pnpm"
 case ":$PATH:" in
@@ -87,8 +83,6 @@ if [ -f "$HOME/.secrets" ]; then
 fi
 
 # ===== ALIASES =====
-#
-alias tcloud-ssh='KUBECONFIG=~/.kube/overshoot-h100.k8sconfig kubectl exec -it gpu-workspace -- /bin/bash'
 
 # AIChat
 alias aic='aichat -c '
@@ -130,15 +124,14 @@ function dev() {
   tmux has-session -t "$session_name" 2>/dev/null
   if [ $? != 0 ]; then
     tmux new-session -d -s "$session_name" -n "editor" "nvim .; exec zsh"
-    tmux new-window -t "$session_name" -n "git" "lazygit; exec zsh"
-    tmux select-window -t "$session_name:1"
+    tmux new-window -t "$session_name" "exec zsh"
+    tmux select-window -t "$session_name:editor"
   fi
   tmux attach-session -t "$session_name"
 }
 
 # Kill all local procceses
 alias k='~/younes-dotfiles/kill_locals.sh'
-alias edit_s3='~/younes-dotfiles/edit_s3.sh'
 
 # Misc
 alias lg='lazygit'
@@ -158,6 +151,18 @@ function mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
+# Optional private/org overlay. Keep company-specific helpers out of this public repo.
+OVS_DOTFILES_DIR="${OVS_DOTFILES_DIR:-$HOME/.ovs-dotfiles}"
+if [ -d "$OVS_DOTFILES_DIR/bin" ]; then
+  export PATH="$OVS_DOTFILES_DIR/bin:$PATH"
+fi
+if [ -d "$OVS_DOTFILES_DIR/zsh" ]; then
+  for ovs_file in "$OVS_DOTFILES_DIR"/zsh/*.zsh(N); do
+    source "$ovs_file"
+  done
+  unset ovs_file
+fi
+
 # Set nvim as defautl editor
 export EDITOR="nvim"
 export VISUAL="nvim"
@@ -169,5 +174,4 @@ bindkey '^y' autosuggest-accept
 bindkey '^k' up-history
 bindkey '^j' down-history
 
-source ~/.k8s-helpers.zsh
 export PATH="$HOME/.local/bin:$PATH"

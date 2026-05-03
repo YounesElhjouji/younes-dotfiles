@@ -1,6 +1,13 @@
 # younes-dotfiles
 
-Personal dotfiles and VM bootstrap for a ready-to-go dev environment.
+Public personal dotfiles and VM bootstrap for a ready-to-go dev environment.
+
+This repository is intentionally safe to publish. It should contain only generic
+personal environment configuration: shell ergonomics, editor/tmux setup, bootstrap
+scripts, and public helper scripts.
+
+Company-specific or operational tooling belongs in a separate private overlay
+repository, conventionally checked out at `~/.ovs-dotfiles`.
 
 ## Quick Start
 
@@ -24,9 +31,45 @@ Run `suit-status` at any time to see what's ready.
 - **CLI tools**: fzf, eza, zoxide, lazygit, bat, ripgrep, fd, shell-ai
 - **Homebrew** (Linuxbrew) for package management
 
+## Public vs OVS Overlay
+
+Keep this repo public and generic. Do not add company-specific tooling or
+operational metadata here, even when it does not contain passwords.
+
+Examples that belong in the private `.ovs-dotfiles` overlay:
+
+- names, paths, aliases, shortcuts, IDs, or conventions for professional systems
+- helpers related to professional workflows or organization-specific tooling
+- internal endpoints, object paths, service names, labels, or operational metadata
+- CLI tools intended to be shared only inside the organization
+
+Actual credentials should not be committed to either repo. Keep tokens, private
+keys, passwords, API keys, and similar sensitive values in local secret stores
+such as `~/.secrets`, a password manager, or provider-specific auth.
+
+The public `zshrc` optionally loads an overlay from:
+
+```zsh
+${OVS_DOTFILES_DIR:-$HOME/.ovs-dotfiles}
+```
+
+Suggested private overlay layout:
+
+```text
+.ovs-dotfiles/
+  zsh/
+    00-path.zsh
+    10-infra.zsh
+    20-cloud.zsh
+    30-aliases.zsh
+  bin/
+    ovs-helper
+```
+
 ## Structure
 
 ```
+AGENTS.md  # Instructions for coding agents working in this public repo
 vm/
   setup.sh   # Bootstrap script (Phase 1 foreground + Phase 2 background)
   zshrc      # Zsh configuration (symlinked to ~/.zshrc)
