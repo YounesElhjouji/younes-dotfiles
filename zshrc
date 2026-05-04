@@ -83,12 +83,6 @@ if [ -f "$HOME/.secrets" ]; then
 fi
 
 # ===== ALIASES =====
-
-# AIChat
-alias aic='aichat -c '
-alias ait='aichat "Suggest the best devtool(s) to achieve the following task. If multiple options exist, list them from best to least good with a one-sentence description for each: " '
-alias ain='aichat "Give me the Neovim keybindings or commands to: " '
-
 # Directory navigation
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -130,9 +124,6 @@ function dev() {
   tmux attach-session -t "$session_name"
 }
 
-# Kill all local procceses
-alias k='~/younes-dotfiles/kill_locals.sh'
-
 # Misc
 alias lg='lazygit'
 editrc() {
@@ -151,7 +142,7 @@ function mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
-# Optional private/org overlay. Keep company-specific helpers out of this public repo.
+# Optional private/org overlay. Keep overshoot-specific helpers out of this public repo.
 OVS_DOTFILES_DIR="${OVS_DOTFILES_DIR:-$HOME/.ovs-dotfiles}"
 if [ -d "$OVS_DOTFILES_DIR/bin" ]; then
   export PATH="$OVS_DOTFILES_DIR/bin:$PATH"
