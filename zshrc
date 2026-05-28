@@ -166,3 +166,6 @@ bindkey '^k' up-history
 bindkey '^j' down-history
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# The next line updates PATH for Nebius CLI.
+if [ -f '/Users/youneselhjouji/.nebius/path.zsh.inc' ]; then source '/Users/youneselhjouji/.nebius/path.zsh.inc'; fi

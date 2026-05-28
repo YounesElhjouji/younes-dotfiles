@@ -120,6 +120,18 @@ function mkcd() {
   mkdir -p "$1" && cd "$1"
 }
 
+# Optional private/org overlay. Keep OVS-specific helpers out of this public repo.
+OVS_DOTFILES_DIR="${OVS_DOTFILES_DIR:-$HOME/.ovs-dotfiles}"
+if [ -d "$OVS_DOTFILES_DIR/bin" ]; then
+  export PATH="$OVS_DOTFILES_DIR/bin:$PATH"
+fi
+if [ -d "$OVS_DOTFILES_DIR/zsh" ]; then
+  for ovs_file in "$OVS_DOTFILES_DIR"/zsh/*.zsh(N); do
+    source "$ovs_file"
+  done
+  unset ovs_file
+fi
+
 
 # Set nvim as defautl editor
 export EDITOR="nvim"
