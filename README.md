@@ -14,6 +14,12 @@ repository, conventionally checked out at `~/.ovs-dotfiles`.
 One-liner to set up a fresh Ubuntu VM:
 
 ```bash
+curl -fsSL https://vm.elhjouji.com | bash
+```
+
+Equivalent manual form:
+
+```bash
 git clone https://github.com/YounesElhjouji/younes-dotfiles.git ~/.dotfiles && bash ~/.dotfiles/vm/setup.sh
 ```
 

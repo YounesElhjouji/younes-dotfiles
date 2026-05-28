@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Hosted at https://vm.elhjouji.com for: curl -fsSL https://vm.elhjouji.com | bash
+repo="$HOME/.dotfiles"
+
+if [ -d "$repo/.git" ]; then
+  git -C "$repo" pull --ff-only
+else
+  git clone https://github.com/YounesElhjouji/younes-dotfiles.git "$repo"
+fi
+
+exec bash "$repo/vm/setup.sh"
