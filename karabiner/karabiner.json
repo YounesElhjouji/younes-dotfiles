@@ -113,6 +113,136 @@
                         ]
                     },
                     {
+                        "description": "Space app launcher: A Arc, G Ghostty, S Slack, F Finder",
+                        "manipulators": [
+                            {
+                                "from": {
+                                    "key_code": "spacebar",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "parameters": {
+                                    "basic.to_delayed_action_delay_milliseconds": 250,
+                                    "basic.to_if_alone_timeout_milliseconds": 250,
+                                    "basic.to_if_held_down_threshold_milliseconds": 250
+                                },
+                                "to_after_key_up": [
+                                    {
+                                        "set_variable": {
+                                            "name": "space_app_launcher",
+                                            "value": 0
+                                        },
+                                        "halt": true
+                                    }
+                                ],
+                                "to_delayed_action": {
+                                    "to_if_canceled": [{ "key_code": "spacebar" }]
+                                },
+                                "to_if_alone": [{ "key_code": "spacebar" }],
+                                "to_if_held_down": [
+                                    {
+                                        "set_variable": {
+                                            "name": "space_app_launcher",
+                                            "value": 1
+                                        }
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "name": "space_app_launcher",
+                                        "type": "variable_if",
+                                        "value": 1
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "a",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "software_function": {
+                                            "open_application": {
+                                                "file_path": "/Applications/Arc.app"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "name": "space_app_launcher",
+                                        "type": "variable_if",
+                                        "value": 1
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "g",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "software_function": {
+                                            "open_application": {
+                                                "file_path": "/Applications/Ghostty.app"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "name": "space_app_launcher",
+                                        "type": "variable_if",
+                                        "value": 1
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "s",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "software_function": {
+                                            "open_application": {
+                                                "file_path": "/Applications/Slack.app"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "type": "basic"
+                            },
+                            {
+                                "conditions": [
+                                    {
+                                        "name": "space_app_launcher",
+                                        "type": "variable_if",
+                                        "value": 1
+                                    }
+                                ],
+                                "from": {
+                                    "key_code": "f",
+                                    "modifiers": { "optional": ["any"] }
+                                },
+                                "to": [
+                                    {
+                                        "software_function": {
+                                            "open_application": {
+                                                "file_path": "/System/Library/CoreServices/Finder.app"
+                                            }
+                                        }
+                                    }
+                                ],
+                                "type": "basic"
+                            }
+                        ]
+                    },
+                    {
                         "description": "Dual-role: A/; hold=Ctrl, Z// hold=Shift",
                         "manipulators": [
                             {
@@ -121,7 +251,7 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "parameters": {
-                                    "basic.to_if_held_down_threshold_milliseconds": 170
+                                    "basic.to_if_held_down_threshold_milliseconds": 200
                                 },
                                 "to_delayed_action": {
                                     "to_if_canceled": [{ "key_code": "a" }],
@@ -148,7 +278,7 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "parameters": {
-                                    "basic.to_if_held_down_threshold_milliseconds": 170
+                                    "basic.to_if_held_down_threshold_milliseconds": 200
                                 },
                                 "to_delayed_action": {
                                     "to_if_canceled": [{ "key_code": "semicolon" }],
@@ -175,7 +305,7 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "parameters": {
-                                    "basic.to_if_held_down_threshold_milliseconds": 170
+                                    "basic.to_if_held_down_threshold_milliseconds": 200
                                 },
                                 "to_delayed_action": {
                                     "to_if_canceled": [{ "key_code": "z" }],
@@ -202,7 +332,7 @@
                                     "modifiers": { "optional": ["any"] }
                                 },
                                 "parameters": {
-                                    "basic.to_if_held_down_threshold_milliseconds": 170
+                                    "basic.to_if_held_down_threshold_milliseconds": 200
                                 },
                                 "to_delayed_action": {
                                     "to_if_canceled": [{ "key_code": "slash" }],
