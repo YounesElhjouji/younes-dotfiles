@@ -1,0 +1,29 @@
+name: Codex compact compatibility
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1'
+  push:
+    paths:
+      - 'codex-compact/**'
+      - '.github/workflows/codex-compact.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test upgrade and rollback behavior
+        run: python3 -m unittest discover -s codex-compact -p 'test_*.py'
+      - name: Check the patch against latest stable Codex
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 codex-compact/manage.py update --local-recipe --check

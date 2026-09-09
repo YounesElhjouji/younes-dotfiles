@@ -1,0 +1,19 @@
+OpenAI Codex
+Copyright 2025 OpenAI
+
+This project includes code derived from Ratatui (https://github.com/ratatui/ratatui),
+licensed under the MIT license.
+Copyright (c) 2016-2022 Florian Dehau
+Copyright (c) 2023-2025 The Ratatui Developers
+
+Local modification: restore compact command activity in the terminal UI.
+The patch reverses OpenAI commit 32f48598a0609a882e5847f0d3e35d6d67f375bc
+(PR #41893), restoring the implementation originally introduced by commit
+1f41cc5d92722748e45cae9cecc6d883a4e7cbb1 (PR #38921).
+
+Initial base: rust-v0.153.4, commit
+3d2ee51ca2d5db578f328aa75e20aa22c0197c9a.
+
+Upstream: https://github.com/openai/codex
+The accompanying LICENSE is the upstream Apache License, Version 2.0.
+The maintenance scripts in this directory are also provided under that license.

@@ -36,6 +36,8 @@ Run `suit-status` at any time to see what's ready.
 - **neovim** with custom config ([younes-nvim-config](https://github.com/YounesElhjouji/younes-nvim-config))
 - **CLI tools**: fzf, eza, zoxide, lazygit, bat, ripgrep, fd, shell-ai
 - **Homebrew** (Linuxbrew) for package management
+- **Optional [compact Codex display](codex-compact/README.md)**: upstream command
+  grouping with a tested upgrade process, expanded mode, and rollback
 
 ## Public vs OVS Overlay
 
