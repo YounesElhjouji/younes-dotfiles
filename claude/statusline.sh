@@ -30,9 +30,11 @@ THEME=${THEME:-dark}
 #   HI percentages · MID model, bar fill · LO labels and secondary text · RULE separators
 # Accents are blended ~50-60% into the background.
 if [ "$THEME" = light ]; then
-  # light backgrounds need more contrast for the same visual weight, so these sit ~1.5x higher
-  HI=$(hex '#49626a'); MID=$(hex '#6f8184'); LO=$(hex '#95a09d'); RULE=$(hex '#ced0c4')
-  VIOLET=$(hex '#8789ca'); CYAN=$(hex '#279992'); ADDC=$(hex '#8b9d0b'); DELC=$(hex '#e77168')
+  # indigo percentages (echoing the diamond) over warm neutrals, which suit the cream better than
+  # Solarized's blue-grey bases; light backgrounds need more contrast for the same weight, so the
+  # levels sit ~1.5x above dark (6.5 / 3.9 / 2.4 / 1.35)
+  HI=$(hex '#5b4f95'); MID=$(hex '#807b71'); LO=$(hex '#a6a193'); RULE=$(hex '#dcd6c5')
+  VIOLET=$(hex '#7a7bbe'); CYAN=$(hex '#2a9087'); ADDC=$(hex '#748a1e'); DELC=$(hex '#cd6151')
 else
   HI=$(hex '#839496'); MID=$(hex '#586e75'); LO=$(hex '#35535c'); RULE=$(hex '#1a3f49')
   VIOLET=$(hex '#41558b'); CYAN=$(hex '#197271'); ADDC=$(hex '#42621b'); DELC=$(hex '#6e2e32')
