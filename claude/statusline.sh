@@ -4,15 +4,32 @@
 # Reads session JSON on stdin (schema: https://code.claude.com/docs/en/statusline).
 
 input=$(cat)
-export LC_ALL=${LC_ALL:-en_US.UTF-8} LANG=${LANG:-en_US.UTF-8}
+# a UTF-8 locale for the glyphs: en_US on macOS, C.UTF-8 on Linux boxes without en_US generated
+UTF=en_US.UTF-8; [ "$(uname)" = Darwin ] || UTF=C.UTF-8
+export LC_ALL=${LC_ALL:-$UTF} LANG=${LANG:-$UTF}
 
 hex() { printf '\033[38;2;%d;%d;%dm' "0x${1:1:2}" "0x${1:3:2}" "0x${1:5:2}"; }
 B=$'\033[1m'; R=$'\033[0m'
-# Solarized tones by role, flipped for light mode (macOS appearance; Linux assumes dark).
+# Light or dark: explicit override, then macOS appearance, then the terminal's own answer via tmux
+# (tmux >= 3.6 asks Ghostty & co., so a remote VM session follows the laptop), else dark.
+THEME=${CLAUDE_STATUSLINE_THEME:-}
+if [ -z "$THEME" ] && [ "$(uname)" = Darwin ]; then
+  [ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ] && THEME=dark || THEME=light
+fi
+if [ -z "$THEME" ] && [ -n "$TMUX" ]; then
+  # clients attached to this pane's session (a plain `display -p` has no client outside a key binding)
+  SESS=$(tmux display -p ${TMUX_PANE:+-t "$TMUX_PANE"} '#{session_name}' 2>/dev/null)
+  case "$(tmux list-clients ${SESS:+-t "$SESS"} -F '#{client_theme}' 2>/dev/null | grep -m1 -E 'light|dark')" in
+    light) THEME=light ;; dark) THEME=dark ;;
+  esac
+fi
+THEME=${THEME:-dark}
+
+# Solarized tones by role, flipped for light mode.
 # Everything but the percentages is pulled toward the background so the line stays quiet:
 #   HI percentages · MID model, bar fill · LO labels and secondary text · RULE separators
 # Accents are blended ~50-60% into the background.
-if [ "$(uname)" = Darwin ] && [ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" != "Dark" ]; then
+if [ "$THEME" = light ]; then
   # light backgrounds need more contrast for the same visual weight, so these sit ~1.5x higher
   HI=$(hex '#49626a'); MID=$(hex '#6f8184'); LO=$(hex '#95a09d'); RULE=$(hex '#ced0c4')
   VIOLET=$(hex '#8789ca'); CYAN=$(hex '#279992'); ADDC=$(hex '#8b9d0b'); DELC=$(hex '#e77168')
