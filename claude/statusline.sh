@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code status line, one row, solarized accents:
-#   Fable 5.1 · medium  │  ⎇ main 3 files +120 −34  │  ctx ◑ 41%  │  weekly ▰▰▰▱▱▱▱▱ 32%  ↻ 6d 22h  │  my-project
+#   ◆ Fable 5.1 · medium  │  ⎇ main 3 files +120 −34  │  ctx ◑ 41%  │  weekly ▰▰▰▱▱▱▱▱ 32%  ↻ 6d 22h  │  my-project
 # Reads session JSON on stdin (schema: https://code.claude.com/docs/en/statusline).
 
 input=$(cat)
@@ -83,7 +83,10 @@ if [ -f "$USAGE_CACHE" ]; then
 fi
 
 # model · effort
-SEG_MODEL="${B}${VIOLET}${MODEL}${R}"
+# "◆ Opus": violet diamond, name in soft white (dark mode) or default foreground (light / Linux)
+MC=$'\033[39m'
+[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ] && MC=$(fg 252)
+SEG_MODEL="${VIOLET}◆${R} ${MC}${MODEL}${R}"
 if [ -n "$EFFORT" ]; then
   case "$EFFORT" in
     xhigh|max) EC=$ORANGE ;;
@@ -110,11 +113,14 @@ if [ -n "$BRANCH" ]; then
   SEG_GIT="${CYAN}⎇ ${BRANCH}${R}${DIRTY}"
 fi
 
-# context: "ctx ◑ 41%"; faint icon, plain number; orange from 70%, bold red from 85%
+# context: "ctx ◑ 41%"
 [ "$PCT" -gt 100 ] 2>/dev/null && PCT=100
-IC=$DIM; NC=$TXT                                         # quiet icon, readable number
-[ "$PCT" -ge 70 ] && { IC=$ORANGE; NC=$ORANGE; }
-[ "$PCT" -ge 85 ] && { IC=$RED;    NC="${B}${RED}"; }
+# icon gains weight as context fills: faint, grey, yellow, orange, bold red
+IC=$DIM; NC=$TXT
+[ "$PCT" -ge 25 ] && IC=$TXT
+[ "$PCT" -ge 50 ] && { IC=$YELLOW;         NC=$YELLOW; }
+[ "$PCT" -ge 70 ] && { IC="${B}${ORANGE}"; NC=$ORANGE; }
+[ "$PCT" -ge 85 ] && { IC="${B}${RED}";    NC="${B}${RED}"; }
 # fill icon, nearest quarter: ○ ◔ ◑ ◕ ●
 if   [ "$PCT" -lt 13 ]; then ICON="○"
 elif [ "$PCT" -lt 38 ]; then ICON="◔"
@@ -123,12 +129,16 @@ elif [ "$PCT" -lt 88 ]; then ICON="◕"
 else                         ICON="●"; fi
 SEG_CTX="${DIM}ctx ${R}${IC}${ICON}${R} ${NC}${PCT}%${R}"
 
-# weekly meter (green; yellow from 70%, red from 90%)
+# weekly meter: green, yellow from 50%, orange from 75%, red from 90%
 SEG_WEEK=""
 if [ -n "$SEVEN" ]; then
-  WC=$GREEN; [ "$SEVEN" -ge 70 ] && WC=$YELLOW; [ "$SEVEN" -ge 90 ] && WC=$RED
-  SEG_WEEK="${DIM}${WEEK_LABEL} ${R}$(meter "$SEVEN" "$WC") ${B}${WC}$(printf '%2d' "$SEVEN")%${R}"
-  RC=$DIM; [ "$SEVEN" -ge 90 ] && RC=$MAGENTA
+  WC=$GREEN
+  [ "$SEVEN" -ge 50 ] && WC=$YELLOW
+  [ "$SEVEN" -ge 75 ] && WC=$ORANGE
+  [ "$SEVEN" -ge 90 ] && WC=$RED
+  WB=""; [ "$SEVEN" -ge 90 ] && WB=$B   # bold only when nearly out
+  SEG_WEEK="${DIM}${WEEK_LABEL} ${R}$(meter "$SEVEN" "$WC") ${WB}${WC}$(printf '%2d' "$SEVEN")%${R}"
+  RC=$DIM; [ "$SEVEN" -ge 75 ] && RC=$WC   # countdown takes the warning color once it matters
   [ -n "$SEVEN_AT" ] && SEG_WEEK="${SEG_WEEK}  ${RC}↻ $(countdown "$SEVEN_AT")${R}"
 fi
 

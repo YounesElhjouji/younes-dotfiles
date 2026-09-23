@@ -54,7 +54,7 @@ bash ~/.dotfiles/claude/setup.sh
 The status line is one row with solarized accents:
 
 ```text
-Fable 5.1 · medium  │  ⎇ main 3 files +120 −34  │  ctx ◔ 31%  │  Fable weekly ▰▱▱▱▱▱▱▱ 12%  ↻ 6d 22h  │  my-project
+◆ Fable 5.1 · medium  │  ⎇ main 3 files +120 −34  │  ctx ◔ 31%  │  Fable weekly ▰▱▱▱▱▱▱▱ 12%  ↻ 6d 22h  │  my-project
 ```
 
 Weekly usage only shows on Claude.ai subscriptions; API-key sessions just omit it. When the
