@@ -35,9 +35,31 @@ Run `suit-status` at any time to see what's ready.
 - **zsh** with Oh My Zsh, vi mode, and zsh-autosuggestions
 - **neovim** with custom config ([younes-nvim-config](https://github.com/YounesElhjouji/younes-nvim-config))
 - **CLI tools**: fzf, eza, zoxide, lazygit, bat, ripgrep, fd, shell-ai
+- **Claude Code** with a shared status line (model, effort, branch, context and weekly usage meters)
 - **Homebrew** (Linuxbrew) for package management
 - **Optional [compact Codex display](codex-compact/README.md)**: upstream command
   grouping with a tested upgrade process, expanded mode, and rollback
+
+## Claude Code
+
+`claude/setup.sh` installs Claude Code via the native installer, symlinks
+`claude/statusline.sh` to `~/.claude/statusline.sh`, and merges a `statusLine`
+block into `~/.claude/settings.json` without touching other settings. Both
+`vm/setup.sh` and `mac-setup.sh` call it, and it is safe to re-run on its own:
+
+```bash
+bash ~/.dotfiles/claude/setup.sh
+```
+
+The status line is one row with solarized accents:
+
+```text
+Fable 5.1 · medium  │  ⎇ main 3 files +120 −34  │  ctx ◔ 31%  │  Fable weekly ▰▱▱▱▱▱▱▱ 12%  ↻ 6d 22h  │  my-project
+```
+
+Weekly usage only shows on Claude.ai subscriptions; API-key sessions just omit it. When the
+selected model has its own weekly limit (as in `/usage`), that one is shown, read from
+`/api/oauth/usage` with the stored login token and cached for 60s in `~/.cache/claude-statusline/`.
 
 ## Public vs OVS Overlay
 

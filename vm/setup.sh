@@ -56,7 +56,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
   unzip xz-utils \
   zsh \
   python3 python3-venv python3-pip python-is-python3 \
-  ripgrep fd-find stow
+  ripgrep fd-find stow jq
 
 # Provide `fd` name if only `fdfind` exists
 if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
@@ -136,6 +136,12 @@ if [ "$CURRENT_SHELL" != "$ZSH_PATH" ]; then
   else
     warn "Failed to set default shell. You can run: sudo chsh -s $ZSH_PATH $USER"
   fi
+fi
+
+# ========== Claude Code + status line ==========
+if [ -x "$REPO_ROOT/claude/setup.sh" ]; then
+  log "Installing Claude Code and status line..."
+  bash "$REPO_ROOT/claude/setup.sh" || warn "Claude Code setup failed; re-run claude/setup.sh later."
 fi
 
 log "=== Phase 1 complete! Zsh is ready. ==="

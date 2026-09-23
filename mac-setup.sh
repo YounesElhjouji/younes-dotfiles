@@ -163,6 +163,12 @@ else
   log "Default shell is already zsh."
 fi
 
+# ========== Claude Code + status line ==========
+if [ -x "$SCRIPT_DIR/claude/setup.sh" ]; then
+  log "Installing Claude Code and status line..."
+  bash "$SCRIPT_DIR/claude/setup.sh" || warn "Claude Code setup failed; re-run claude/setup.sh later."
+fi
+
 log "=== Phase 1 complete! ==="
 
 # ==========================================================
