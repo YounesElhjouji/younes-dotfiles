@@ -6,21 +6,30 @@
 input=$(cat)
 export LC_ALL=${LC_ALL:-en_US.UTF-8} LANG=${LANG:-en_US.UTF-8}
 
-fg() { printf '\033[38;5;%sm' "$1"; }
+hex() { printf '\033[38;2;%d;%d;%dm' "0x${1:1:2}" "0x${1:3:2}" "0x${1:5:2}"; }
 B=$'\033[1m'; R=$'\033[0m'
-# solarized 256-color approximations (work on both dark and light backgrounds)
-DIM=$'\033[2m'    # faint: fades toward the background in light and dark themes
-TXT=$(fg 245)      # base1
-VIOLET=$(fg 61); BLUE=$(fg 33); CYAN=$(fg 37); MAGENTA=$(fg 125); GREEN=$(fg 64); YELLOW=$(fg 136); ORANGE=$(fg 166); RED=$(fg 160)
-SEP="${DIM}  │  ${R}"
+# Solarized tones by role, flipped for light mode (macOS appearance; Linux assumes dark).
+# Everything but the percentages is pulled toward the background so the line stays quiet:
+#   HI percentages · MID model, bar fill · LO labels and secondary text · RULE separators
+# Accents are blended ~50-60% into the background.
+if [ "$(uname)" = Darwin ] && [ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" != "Dark" ]; then
+  # light backgrounds need more contrast for the same visual weight, so these sit ~1.5x higher
+  HI=$(hex '#49626a'); MID=$(hex '#6f8184'); LO=$(hex '#95a09d'); RULE=$(hex '#ced0c4')
+  VIOLET=$(hex '#8789ca'); CYAN=$(hex '#279992'); ADDC=$(hex '#8b9d0b'); DELC=$(hex '#e77168')
+else
+  HI=$(hex '#839496'); MID=$(hex '#586e75'); LO=$(hex '#35535c'); RULE=$(hex '#1a3f49')
+  VIOLET=$(hex '#41558b'); CYAN=$(hex '#197271'); ADDC=$(hex '#42621b'); DELC=$(hex '#6e2e32')
+fi
+YELLOW=$(hex '#b58900'); ORANGE=$(hex '#cb4b16'); RED=$(hex '#dc322f')   # warnings stay full strength
+SEP="${RULE}  │  ${R}"
 CELLS=8
 
-meter() {  # percent color -> "▰▰▰▰▱▱▱▱", filled in color, rest faint
+meter() {  # percent color -> "▰▰▰▰▱▱▱▱", filled in color, rest LO
   local p=${1:-0} col=$2 n out=""
   [ "$p" -gt 100 ] && p=100
   n=$(( (p * CELLS + 50) / 100 ))
   for ((i=0;i<n;i++));     do out="${out}▰"; done
-  out="${col}${out}${R}${DIM}"
+  out="${col}${out}${R}${LO}"
   for ((i=n;i<CELLS;i++)); do out="${out}▱"; done
   printf '%s%s' "$out" "$R"
 }
@@ -83,17 +92,20 @@ if [ -f "$USAGE_CACHE" ]; then
 fi
 
 # model · effort
-# "◆ Opus": violet diamond, name in soft white (dark mode) or default foreground (light / Linux)
-MC=$'\033[39m'
-[ "$(defaults read -g AppleInterfaceStyle 2>/dev/null)" = "Dark" ] && MC=$(fg 252)
-SEG_MODEL="${VIOLET}◆${R} ${MC}${MODEL}${R}"
+SEG_MODEL="${VIOLET}◆${R} ${MID}${MODEL}${R}"
+
+level_color() {  # percent -> HI, orange from 80%, bold red from 95% (context and weekly)
+  if   [ "$1" -ge 95 ]; then printf '%s' "${B}${RED}"
+  elif [ "$1" -ge 80 ]; then printf '%s' "$ORANGE"
+  else                       printf '%s' "$HI"; fi
+}
 if [ -n "$EFFORT" ]; then
   case "$EFFORT" in
     xhigh|max) EC=$ORANGE ;;
     high)      EC=$YELLOW ;;
-    *)         EC=$DIM ;;
+    *)         EC=$LO ;;
   esac
-  SEG_MODEL="${SEG_MODEL}${DIM} · ${R}${EC}${EFFORT}${R}"
+  SEG_MODEL="${SEG_MODEL}${LO} · ${R}${EC}${EFFORT}${R}"
 fi
 
 # branch
@@ -106,39 +118,30 @@ if [ -n "$BRANCH" ]; then
     read -r ADD DEL < <(git -C "$CWD" diff HEAD --numstat 2>/dev/null |
       awk '$1 != "-" {a+=$1; d+=$2} END {print a+0, d+0}')
     [ "$FILES" -eq 1 ] && NOUN=file || NOUN=files
-    DIRTY=" ${DIM}${FILES} ${NOUN}${R}"
-    [ "$ADD" -gt 0 ] && DIRTY="${DIRTY} ${DIM}${GREEN}+$(short "$ADD")${R}"
-    [ "$DEL" -gt 0 ] && DIRTY="${DIRTY} ${DIM}${RED}−$(short "$DEL")${R}"
+    DIRTY=" ${LO}${FILES} ${NOUN}${R}"
+    [ "$ADD" -gt 0 ] && DIRTY="${DIRTY} ${ADDC}+$(short "$ADD")${R}"
+    [ "$DEL" -gt 0 ] && DIRTY="${DIRTY} ${DELC}−$(short "$DEL")${R}"
   fi
   SEG_GIT="${CYAN}⎇ ${BRANCH}${R}${DIRTY}"
 fi
 
 # context: "ctx ◑ 41%"
 [ "$PCT" -gt 100 ] 2>/dev/null && PCT=100
-# icon gains weight as context fills: faint, grey, yellow, orange, bold red
-IC=$DIM; NC=$TXT
-[ "$PCT" -ge 25 ] && IC=$TXT
-[ "$PCT" -ge 50 ] && { IC=$YELLOW;         NC=$YELLOW; }
-[ "$PCT" -ge 70 ] && { IC="${B}${ORANGE}"; NC=$ORANGE; }
-[ "$PCT" -ge 85 ] && { IC="${B}${RED}";    NC="${B}${RED}"; }
+NC=$(level_color "$PCT"); IC=$NC; [ "$PCT" -lt 80 ] && IC=$MID   # icon a step below the number
 # fill icon, nearest quarter: ○ ◔ ◑ ◕ ●
 if   [ "$PCT" -lt 13 ]; then ICON="○"
 elif [ "$PCT" -lt 38 ]; then ICON="◔"
 elif [ "$PCT" -lt 63 ]; then ICON="◑"
 elif [ "$PCT" -lt 88 ]; then ICON="◕"
 else                         ICON="●"; fi
-SEG_CTX="${DIM}ctx ${R}${IC}${ICON}${R} ${NC}${PCT}%${R}"
+SEG_CTX="${LO}ctx ${R}${IC}${ICON}${R} ${NC}${PCT}%${R}"
 
-# weekly meter: green, yellow from 50%, orange from 75%, red from 90%
+# weekly meter
 SEG_WEEK=""
 if [ -n "$SEVEN" ]; then
-  WC=$GREEN
-  [ "$SEVEN" -ge 50 ] && WC=$YELLOW
-  [ "$SEVEN" -ge 75 ] && WC=$ORANGE
-  [ "$SEVEN" -ge 90 ] && WC=$RED
-  WB=""; [ "$SEVEN" -ge 90 ] && WB=$B   # bold only when nearly out
-  SEG_WEEK="${DIM}${WEEK_LABEL} ${R}$(meter "$SEVEN" "$WC") ${WB}${WC}$(printf '%2d' "$SEVEN")%${R}"
-  RC=$DIM; [ "$SEVEN" -ge 75 ] && RC=$WC   # countdown takes the warning color once it matters
+  WC=$(level_color "$SEVEN")
+  SEG_WEEK="${LO}${WEEK_LABEL} ${R}$(meter "$SEVEN" "$WC") ${WC}${SEVEN}%${R}"
+  RC=$LO; [ "$SEVEN" -ge 80 ] && RC=$WC   # countdown takes the warning color once it matters
   [ -n "$SEVEN_AT" ] && SEG_WEEK="${SEG_WEEK}  ${RC}↻ $(countdown "$SEVEN_AT")${R}"
 fi
 
@@ -146,5 +149,5 @@ LINE="${SEG_MODEL}"
 [ -n "$SEG_GIT" ]  && LINE="${LINE}${SEP}${SEG_GIT}"
 LINE="${LINE}${SEP}${SEG_CTX}"
 [ -n "$SEG_WEEK" ] && LINE="${LINE}${SEP}${SEG_WEEK}"
-LINE="${LINE}${SEP}${DIM}${CWD##*/}${R}"   # directory name, last and faint
+LINE="${LINE}${SEP}${LO}${CWD##*/}${R}"   # directory name, last and faint
 printf '%s\n\342\200\213' "$LINE"
